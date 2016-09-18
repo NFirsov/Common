@@ -1,0 +1,204 @@
+﻿<Window x:Class="DiagramEditor.MainWindow" x:Name="MainWindowInstance"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:effects="clr-namespace:System.Windows.Media.Effects;assembly=presentationcore"
+    xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
+    xmlns:lib="clr-namespace:DrawToolsLib;assembly=DiagramTools"
+    xmlns:diagramEditor="clr-namespace:DiagramEditor"
+    xmlns:diagramTools="clr-namespace:DiagramTools;assembly=DiagramTools"
+    Title="MainWindow" Height="518" Width="761"
+    DataContext="{Binding Path=ViewModel, ElementName=MainWindowInstance}">
+
+    <Window.Resources>
+        <lib:ToolTypeConverter x:Key="convToolType"/>
+        <lib:ColorToBrushConverter x:Key="convColorToBrush"/>
+        <lib:FontSizeConverter x:Key="convFont" />
+        <lib:DoubleToIntegerConverter x:Key="convDoubleToInteger" />
+        <lib:IsSelectedToStrokeThicknessConverter x:Key="convSelectedToThickness" />
+        
+        <Style x:Key="fontTextBlockStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{Binding ElementName=diagramViewModel, Path=TextFontFamilyName, Mode=OneWay}"/>
+            <Setter Property="FontStyle" Value="{Binding ElementName=diagramViewModel, Path=TextFontStyle, Mode=OneWay}"/>
+            <Setter Property="FontWeight" Value="{Binding ElementName=diagramViewModel, Path=TextFontWeight, Mode=OneWay}"/>
+            <Setter Property="FontStretch" Value="{Binding ElementName=diagramViewModel, Path=TextFontStretch, Mode=OneWay}"/>
+        </Style>
+        <Style TargetType="Border">
+            <EventSetter Event="MouseDown" Handler="Border_OnMouseDown"></EventSetter>
+            <EventSetter Event="MouseMove" Handler="Border_OnMouseMove"></EventSetter>
+            <EventSetter Event="MouseUp" Handler="Border_OnMouseUp"></EventSetter>
+        </Style>
+    </Window.Resources>
+
+    <DockPanel Margin="0,0,0,0">
+        <ToolBarTray Margin="0,0,0,0" DockPanel.Dock="Top">
+            <ToolBar>
+                <ToggleButton Name="buttonToolPointer"  ToolTip="Pointer" Tag="Pointer"
+                    IsChecked="{Binding Tool, ConverterParameter=Pointer, Converter={StaticResource convToolType}, Mode=OneWay}">
+                    <Image Source="Images/PointerHS.png"/>
+                </ToggleButton>
+                <ToggleButton Name="buttonToolEllipse" ToolTip="Ellipse" Tag="Ellipse"
+                     IsChecked="{Binding Tool, ConverterParameter=Ellipse, Converter={StaticResource convToolType}, Mode=OneWay}">
+                    <Image Source="Images/ellipse.png"/>
+                </ToggleButton>
+                <ToggleButton Name="buttonToolRectangle" ToolTip="Rectangle" Tag="Rectangle"
+                IsChecked="{Binding Tool, ConverterParameter=Rectangle, Converter={StaticResource convToolType}, Mode=OneWay}">
+                    <Image Source="Images/rectangle.png"/>
+                </ToggleButton>
+                <ToggleButton Name="buttonToolText" ToolTip="Text" Tag="Text"
+                IsChecked="{Binding Tool, ConverterParameter=Text, Converter={StaticResource convToolType}, Mode=OneWay}">
+                    <Image Source="Images/Text.png"/>
+                </ToggleButton>
+                <Separator/>
+                <Button Name="buttonPropertiesFont" ToolTip="Font" Click="PropertiesFont_Click">
+                    <!-- Font Family Name (size) -->
+                    <StackPanel Orientation="Horizontal">
+                        <!--://msdn.microsoft.com/ru-ru/library/ms745683(v=vs.110).aspx#styling_and_templating_sample-->
+                        <TextBlock Style="{StaticResource fontTextBlockStyle}" 
+                            Text="{Binding TextFontFamilyName, Mode=OneWay}" />
+                        <TextBlock Style="{StaticResource fontTextBlockStyle}"
+                            Text="{Binding TextFontSize, Converter={StaticResource convFont}, Mode=OneWay}" />
+                    </StackPanel>
+                </Button>
+                <Separator/>
+                <TextBlock Text="      " Margin="5,5,3,5" ToolTip="Color"
+                           Background="{Binding ObjectColor, Converter={StaticResource convColorToBrush}, Mode=OneWay}" />
+                <Button Name="buttonPropertiesColor" ToolTip="Color" Click="PropertiesColor_Click">
+                    <TextBlock>
+                        <Bold>Color</Bold>
+                    </TextBlock>
+                </Button>
+                <Separator/>
+                <TextBlock VerticalAlignment="Center" Margin="5,0,2,0" ToolTip="Line Width">
+                    Width
+                </TextBlock>
+                <ComboBox Name="comboPropertiesLineWidth" ToolTip="Line Width" MinWidth="40"
+                          IsEditable="False"
+                          Margin="5,0,0,0" 
+                          ItemsSource="{Binding LineWidthValues}"
+                          SelectedValue="{Binding LineWidth, Mode=TwoWay}">
+                </ComboBox>
+            </ToolBar>
+        </ToolBarTray>
+
+        <ItemsControl Name="itemsControl" x:FieldModifier="public" ItemsSource="{Binding Path=Diagrams}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Canvas x:Name="canvas" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                    </Canvas>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemContainerStyle>
+                <Style TargetType="ContentPresenter">
+                    <Setter Property="Canvas.Left"
+                    Value="{Binding Path=Left}" />
+                    <Setter Property="Canvas.Top"
+                    Value="{Binding Path=Top}" />
+                    <Setter Property="Width"
+                    Value="{Binding Path=Width}" />
+                    <Setter Property="Height"
+                    Value="{Binding Path=Height}" />
+                    <EventSetter Event="MouseDown" Handler="Presenter_OnMouseDown"></EventSetter>
+                </Style>
+                
+            </ItemsControl.ItemContainerStyle>
+            <ItemsControl.Resources>
+                <DataTemplate DataType="{x:Type lib:RectangleViewModel}">
+                    <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                        <Rectangle Fill="{Binding ObjectColor, Converter={StaticResource convColorToBrush}}"
+                                   IsHitTestVisible="True" Stretch="Fill"
+                                   StrokeThickness="{Binding IsSelected, Converter={StaticResource convSelectedToThickness}}">
+                            <Rectangle.Stroke>
+                                <SolidColorBrush Color="LightGray" ></SolidColorBrush>
+                            </Rectangle.Stroke>
+                        </Rectangle>
+                    </Grid>
+                </DataTemplate>
+                <DataTemplate DataType="{x:Type lib:EllipseViewModel}">
+                    <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+
+                        <Ellipse Fill="{Binding ObjectColor, Converter={StaticResource convColorToBrush}}"
+                                 IsHitTestVisible="True" Stretch="Fill"
+                                 StrokeThickness="{Binding IsSelected, Converter={StaticResource convSelectedToThickness}}">
+                                 <Ellipse.Stroke>
+                                <SolidColorBrush Color="LightGray" ></SolidColorBrush>
+                                 </Ellipse.Stroke>
+                        </Ellipse>
+                                 
+                    </Grid>
+
+                </DataTemplate>
+                <DataTemplate DataType="{x:Type lib:TextViewModel}">
+                    <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                        <Rectangle Fill="Transparent"
+                                   IsHitTestVisible="True" Stretch="Fill"
+                                   StrokeThickness="{Binding IsSelected, Converter={StaticResource convSelectedToThickness}}">
+                            <Rectangle.Stroke>
+                                <SolidColorBrush Color="LightGray" ></SolidColorBrush>
+                            </Rectangle.Stroke>
+                        </Rectangle>
+                            <TextBlock Foreground="{Binding ObjectColor, Converter={StaticResource convColorToBrush}}"
+                           FontSize="{Binding TextFontSize}"
+                           FontWeight="{Binding TextFontWeight}"
+                           FontFamily="{Binding TextFontFamilyName}"
+                           FontStyle="{Binding TextFontStyle}"
+                           FontStretch="{Binding TextFontStretch}"
+                           IsHitTestVisible="True"
+                           Margin="10,0,10,0"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center" 
+                           TextWrapping="WrapWithOverflow"
+                           Text="{Binding Text}">
+                            <TextBlock.Effect>
+                                <DropShadowEffect Opacity="1"
+                                          BlurRadius="4"
+                                          Color="Black"
+                                          ShadowDepth="0" />
+                           </TextBlock.Effect>
+                        </TextBlock>
+                    </Grid>
+                </DataTemplate>
+                <DataTemplate DataType="{x:Type lib:SelectionRectangleViewModel}">
+                    <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Canvas.ZIndex ="100">
+                        <Grid.Resources>
+                            <Style TargetType="Rectangle">
+                                <Setter Property="Stroke">
+                                    <Setter.Value>
+                                        <SolidColorBrush Color="LightGray" />
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter Property="StrokeThickness" Value="3"/>
+                                <Setter Property="Fill" Value="Transparent"/>
+                                <Setter Property="IsHitTestVisible" Value="True"/>
+                                <EventSetter Event="MouseMove" Handler="SelectionRectangle_OnMouseMove"/>
+                            </Style>
+                        </Grid.Resources>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="12"></RowDefinition>
+                            <RowDefinition></RowDefinition>
+                            <RowDefinition Height="12"></RowDefinition>
+                            <RowDefinition></RowDefinition>
+                            <RowDefinition Height="12"></RowDefinition>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="12"></ColumnDefinition>
+                            <ColumnDefinition></ColumnDefinition>
+                            <ColumnDefinition Width="12"></ColumnDefinition>
+                            <ColumnDefinition></ColumnDefinition>
+                            <ColumnDefinition Width="12"></ColumnDefinition>
+                        </Grid.ColumnDefinitions>
+
+                        <Rectangle Grid.Row="0" Grid.Column="0" Tag="0" Cursor="SizeNWSE"/>
+                        <Rectangle Grid.Row="0" Grid.Column="2" Tag="1" Cursor="SizeNS"/>
+                        <Rectangle Grid.Row="0" Grid.Column="4" Tag="2" Cursor="SizeNESW"/>
+                        <Rectangle Grid.Row="2" Grid.Column="4" Tag="3" Cursor="SizeWE"/>
+                        <Rectangle Grid.Row="4" Grid.Column="4" Tag="4" Cursor="SizeNWSE"/>
+                        <Rectangle Grid.Row="4" Grid.Column="2" Tag="5" Cursor="SizeNS"/>
+                        <Rectangle Grid.Row="4" Grid.Column="0" Tag="6" Cursor="SizeNESW"/>
+                        <Rectangle Grid.Row="2" Grid.Column="0" Tag="7" Cursor="SizeWE"/>
+                    </Grid>
+                </DataTemplate>
+                
+            </ItemsControl.Resources>
+        </ItemsControl>
+    </DockPanel>
+</Window>
