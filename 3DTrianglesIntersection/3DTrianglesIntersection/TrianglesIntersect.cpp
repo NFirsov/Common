@@ -7,7 +7,7 @@
 namespace firsovn
 {
 	bool AreTrianglesIntersect_3x3_X_planes(const Point3D(&tr0)[3], const Point3D(&tr1)[3], const Point3D& ort0, const Point3D& ort1);
-	bool AreTrianglesIntersect_3x3_I_planes(const Point3D(&tr0)[3], const Point3D(&tr1)[3]);
+	bool AreTrianglesIntersect_3x3_I_planes(const Point3D(&tr0)[3], const Point3D(&tr1)[3], const Point3D& ort);
 	bool AreTrianglesIntersect_3x2(const Point3D(&tr)[3], const Point3D& ort, const Point3D& p0, const Point3D& p1);
 	bool AreTrianglesIntersect_3x1(const Point3D(&tr)[3], const Point3D& ort, const Point3D& p);
 	bool AreSegmentsIntersect(const Point3D(&tr0)[3], const Point3D(&tr1)[3]);
@@ -40,7 +40,7 @@ namespace firsovn
 				if (d0 != d0_1) //II-planes
 					return false;
 
-				return AreTrianglesIntersect_3x3_I_planes(tr0, tr1);
+				return AreTrianglesIntersect_3x3_I_planes(tr0, tr1, ort0);
 			}
 
 			return AreTrianglesIntersect_3x3_X_planes(tr0, tr1, ort0, ort1); // X-planes
@@ -68,10 +68,10 @@ namespace firsovn
 	}
 
 	// Function to determine if two 3D triangles are intersect. Triangles must lay on one plane. Triangles must be unmerged.
-	bool AreTrianglesIntersect_3x3_I_planes(const Point3D(&tr0)[3], const Point3D(&tr1)[3])
+	bool AreTrianglesIntersect_3x3_I_planes(const Point3D(&tr0)[3], const Point3D(&tr1)[3], const Point3D& ort)
 	{
-		bool res = IsInsideTriangle(tr0, tr1[0]) || IsInsideTriangle(tr0, tr1[1]) || IsInsideTriangle(tr0, tr1[2]) ||
-				   IsInsideTriangle(tr1, tr0[0]) || IsInsideTriangle(tr1, tr0[1]) || IsInsideTriangle(tr1, tr0[2]);
+		bool res = IsInsideTriangle(tr0, ort, tr1[0]) || IsInsideTriangle(tr0, ort, tr1[1]) || IsInsideTriangle(tr0, ort, tr1[2]) ||
+				   IsInsideTriangle(tr1, ort, tr0[0]) || IsInsideTriangle(tr1, ort, tr0[1]) || IsInsideTriangle(tr1, ort, tr0[2]);
 		if (res)
 			return true;
 
@@ -159,17 +159,17 @@ namespace firsovn
 			Point3D ip;
 			bool res = TryGetIntersectPoint(ort, d, p0, p1, ip);
 			if (res)
-				return IsInsideTriangle(tr, ip);
+				return IsInsideTriangle(tr, ort, ip);
 
 			return false;
 		}
 		else if (count == 1)
 		{
-			return IsInsideTriangle(tr, *onPlane[0]);
+			return IsInsideTriangle(tr, ort, *onPlane[0]);
 		}
 		else if (count == 2)
 		{
-			bool res = IsInsideTriangle(tr, p0) || IsInsideTriangle(tr, p1);
+			bool res = IsInsideTriangle(tr, ort, p0) || IsInsideTriangle(tr, ort, p1);
 			if (res)
 				return true;
 
@@ -188,7 +188,7 @@ namespace firsovn
 		if (!onPlane)
 			return false;
 
-		return IsInsideTriangle(tr, p);
+		return IsInsideTriangle(tr, ort, p);
 	}
 
 	// Function to determine if merged 1/2-point triangles are intersect.

@@ -16,5 +16,6 @@ namespace firsovn
 	double GetPointRelativePosition(const Point3D& p0, const Point3D& p1, const Point3D& p);
 
 	bool IsInsideTriangle(const Point3D(&t)[3], const Point3D& p);
+	bool IsInsideTriangle(const Point3D(&t)[3], const Point3D& ort, const Point3D& p);
 }
 

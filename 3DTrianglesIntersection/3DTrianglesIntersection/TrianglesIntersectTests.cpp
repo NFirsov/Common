@@ -41,27 +41,41 @@ namespace firsovn
 	void IsInsideTriangleTest()
 	{
 		std::cout << "IsInsideTriangleTest:\n\n";
-		const int count = 4;
+		const int count = 10;
 		const Point3D(&testCases)[count][3] = { { Point3D(1, 1, 1), Point3D(1, 1, 5), Point3D(5, 1, 3) },
+												{ Point3D(1, 1, 1), Point3D(1, 1, 5), Point3D(5, 1, 3) },
+												{ Point3D(1, 1, 1), Point3D(1, 1, 5), Point3D(5, 1, 3) },
 												{ Point3D(1, 0, 1), Point3D(1, 0, 5), Point3D(5, 2, 3) },
 												{ Point3D(1, 1, 1), Point3D(1, 1, 5), Point3D(5, 1, 3) },
 												{ Point3D(1, 1, 1), Point3D(1, 1, 5), Point3D(5, 1, 3) },
+												{ Point3D(1, 1, 1), Point3D(1, 1, 5), Point3D(5, 1, 3) },
+												{ Point3D(3, 1, 1), Point3D(6, 1, 3), Point3D(7, 1, -1) },
+												{ Point3D(1, 1, 1), Point3D(1, 1, 5), Point3D(5, 1, 3) },
+												{ Point3D(1, 1, 1), Point3D(1, 1, 5), Point3D(5, 1, 3) },
 		};
-		const Point3D(&testPoints)[count] = { Point3D(5, 1, 3), Point3D(3, 1, 3), Point3D(4, 1, 2), 
-											  Point3D(3, 1, 4.0000000000000001) }; // 
-		const bool(&testResults)[count] = { true, true, false, true };
+		const Point3D(&testPoints)[count] = { Point3D(5, 1, 3), Point3D(1, 1, 1), Point3D(1, 1, 5), Point3D(3, 1, 3), 
+											  Point3D(4, 1, 2), Point3D(3, 1, 5), Point3D(0.5, 1, 3), Point3D(5, 1, 3),
+											  Point3D(3, 1, 4.0000000000000005), Point3D(0.99999999999999994, 1, 4) };
+		const bool(&testResults)[count] = { true, true, true, true, false, false, false, false, false, false };
 
 		for (int i = 0; i < count; i++)
 		{
-			bool res = IsInsideTriangle(testCases[i], testPoints[i]);
-			if (res == testResults[i])
-			{
-				std::cout << i << ": success\n";
-			}
+			std::cout << i << ": ";
+
+			bool res0 = IsInsideTriangle(testCases[i], testPoints[i]);
+			if (res0 == testResults[i])
+				std::cout << "Alg1: success. ";
 			else
-			{
-				std::cout << i << ": failed\n";
-			}
+				std::cout << "Alg1: failed.  ";
+
+			Point3D ort;
+			CrossProduct(testCases[i][0], testCases[i][1], testCases[i][2], ort);
+			bool res1 = IsInsideTriangle(testCases[i], ort, testPoints[i]);
+			
+			if (res1 == testResults[i])
+				std::cout << "Alg2: success.\n";
+			else
+				std::cout << "Alg2: failed.\n";
 		}
 		std::cout << "\n";
 	}
@@ -102,10 +116,8 @@ namespace firsovn
 				continue;
 			}
 
-			if (AreTrianglesIntersect(tr0, tr1) == expectedResult)
-			{
+			if (AreTrianglesIntersect(tr0, tr1) == expectedResult && AreTrianglesIntersect(tr1, tr0) == expectedResult)
 				std::cout << lineNum << ": success\n";
-			}
 			else
 				std::cout << lineNum << ": failed\n";
 		}

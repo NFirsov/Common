@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-
 #include <cmath>
 #include "Geometry.h"
+#include "LinearEquations.h"
 
 namespace firsovn
 {
@@ -69,7 +69,7 @@ namespace firsovn
 		return 0;
 	}
 
-	void GetMiddlePoint(const Point3D& x0, const Point3D& x1, double a, Point3D& res)
+	void GetMiddlePoint(const Point3D& x0, const Point3D& x1, const double a, Point3D& res)
 	{
 		res.at[0] = (x1.at[0] - x0.at[0]) * a + x0.at[0];
 		res.at[1] = (x1.at[1] - x0.at[1]) * a + x0.at[1];
@@ -93,8 +93,8 @@ namespace firsovn
 		return false;
 	}
 
-	// Suppose 'p' lies on the plane formed by triangle, and triangle is not merged.
-	bool IsInsideTriangle(const Point3D(&t)[3], const Point3D& p)
+	// Suppose 'p' lies on the plane formed by triangle, and triangle is not merged. //Not very accurate method, not recommended to use.
+	bool IsInsideTriangle(const Point3D(&t)[3], const Point3D& p) 
 	{
 		Point3D pr0;
 		CrossProduct(t[0], t[1], p, pr0);
@@ -113,6 +113,44 @@ namespace firsovn
 
 		return true;
 	}
+
+	// Suppose 'p' lies on the plane formed by triangle, and triangle is not merged.
+	bool IsInsideTriangle(const Point3D(&t)[3], const Point3D& ort, const Point3D& p)
+	{
+		const Point3D& t0 = t[0];
+		const Point3D& t1 = t[1];
+		const Point3D& t2 = t[2];
+
+		double coef[3][3];
+		coef[0][0] = t1.at[0] - t0.at[0];
+		coef[1][0] = t1.at[1] - t0.at[1];
+		coef[2][0] = t1.at[2] - t0.at[2];
+
+		coef[0][1] = t2.at[0] - t0.at[0];
+		coef[1][1] = t2.at[1] - t0.at[1];
+		coef[2][1] = t2.at[2] - t0.at[2];
+
+		coef[0][2] = ort.at[0];
+		coef[1][2] = ort.at[1];
+		coef[2][2] = ort.at[2];
+
+		double ct[3];
+		ct[0] = p.at[0] - t0.at[0];
+		ct[1] = p.at[1] - t0.at[1];
+		ct[2] = p.at[2] - t0.at[2];
+
+		double eqres[3];
+		if (LinearEquations::SolveCramer(coef, ct, eqres))
+		{
+			double alpha = eqres[0];
+			double beta = eqres[1];
+
+			return (0 <= alpha && alpha <= 1 && 0 <= beta && beta <= 1 && (alpha + beta) <= 1);
+		}
+
+		return true; //Unexpected
+	}
+
 }
 
 
